@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import { orderAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -16,16 +16,16 @@ export default function VendorOrders() {
   const [status, setStatus] = useState('');
   const [actionLoading, setActionLoading] = useState('');
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
       const res = await orderAPI.getStoreOrders({ status, limit: 50 });
       setOrders(res.data || []);
     } catch {}
     setLoading(false);
-  };
+  }, [status]);
 
-  useEffect(() => { fetchOrders(); }, [status]);
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
   const handleAction = async (order, action) => {
     setActionLoading(order._id);

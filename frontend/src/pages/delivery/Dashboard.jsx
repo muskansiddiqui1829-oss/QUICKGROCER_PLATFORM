@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { DeliveryLayout } from '../../components/delivery/DeliveryLayout';
 import { deliveryAPI } from '../../services/api';
-import { getSocket, sendLocationUpdate } from '../../services/socket';
 import toast from 'react-hot-toast';
 
 export default function DeliveryDashboard() {

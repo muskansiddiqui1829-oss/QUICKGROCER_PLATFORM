@@ -10,7 +10,7 @@ export default function StorePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  const { addItem, removeItem, updateQuantity, getItemCount, getTotal, getCount, storeId: cartStoreId, items: cartItems } = useCartStore();
+  const { addItem, updateQuantity, getItemCount, getTotal, getCount, storeId: cartStoreId } = useCartStore();
 
   const [store, setStore] = useState(null);
   const [products, setProducts] = useState([]);
