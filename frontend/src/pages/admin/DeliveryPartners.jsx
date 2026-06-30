@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -8,16 +8,16 @@ export default function AdminDelivery() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState('pending');
 
-  const fetchPartners = async () => {
+  const fetchPartners = useCallback(async () => {
     setLoading(true);
     try {
       const res = await adminAPI.getDeliveryPartners({ status });
       setPartners(res.data || []);
     } catch {}
     setLoading(false);
-  };
+  }, [status]);
 
-  useEffect(() => { fetchPartners(); }, [status]);
+  useEffect(() => { fetchPartners(); }, [fetchPartners]);
 
   const handleApprove = async (id) => {
     try {

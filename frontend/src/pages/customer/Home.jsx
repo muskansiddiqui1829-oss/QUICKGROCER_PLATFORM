@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../../components/common/Navbar';
 import { storeAPI } from '../../services/api';
-import useAuthStore from '../../context/authStore';
-import toast from 'react-hot-toast';
 
 const CATEGORIES = [
   { value: '', label: 'All', emoji: '🛒' },
@@ -24,8 +22,6 @@ export default function Home() {
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const { isAuthenticated } = useAuthStore();
-  const navigate = useNavigate();
 
   const getLocation = useCallback(() => {
     if (!navigator.geolocation) { setLocationError('Geolocation not supported by your browser'); return; }

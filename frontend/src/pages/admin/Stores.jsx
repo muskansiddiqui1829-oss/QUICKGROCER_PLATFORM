@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -10,16 +10,16 @@ export default function AdminStores() {
   const [rejectModal, setRejectModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     setLoading(true);
     try {
       const res = await adminAPI.getStores({ status, limit: 50 });
       setStores(res.data || []);
     } catch {}
     setLoading(false);
-  };
+  }, [status]);
 
-  useEffect(() => { fetchStores(); }, [status]);
+  useEffect(() => { fetchStores(); }, [fetchStores]);
 
   const handleApprove = async (id) => {
     try { await adminAPI.approveStore(id); toast.success('Store approved!'); fetchStores(); } catch {}

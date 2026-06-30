@@ -1,5 +1,5 @@
 // Users.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -10,16 +10,16 @@ export default function AdminUsers() {
   const [role, setRole] = useState('customer');
   const [search, setSearch] = useState('');
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await adminAPI.getUsers({ role, search, limit: 50 });
       setUsers(res.data || []);
     } catch {}
     setLoading(false);
-  };
+  }, [role, search]);
 
-  useEffect(() => { fetchUsers(); }, [role]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const handleToggle = async (id) => {
     try { await adminAPI.toggleUserStatus(id); toast.success('Status updated'); fetchUsers(); } catch {}

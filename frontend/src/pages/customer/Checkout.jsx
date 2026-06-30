@@ -18,7 +18,7 @@ export default function Checkout() {
   const { items, storeId, clearCart } = useCartStore();
   const { user } = useAuthStore();
 
-  const [addresses, setAddresses] = useState(user?.addresses || []);
+  const [addresses] = useState(user?.addresses || []);
   const [selectedAddress, setSelectedAddress] = useState(user?.addresses?.find(a => a.isDefault) || user?.addresses?.[0] || null);
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [walletBalance, setWalletBalance] = useState(0);
