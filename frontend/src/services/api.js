@@ -3,15 +3,23 @@ import toast from 'react-hot-toast';
 
 const rawApiUrl = process.env.REACT_APP_API_URL;
 const API_URL = rawApiUrl
-  ? rawApiUrl.replace(/\/+$|\/api$/gi, '').replace(/\/+$/, '') + '/api'
+  ? rawApiUrl.replace(/\/+$/gi, '').replace(/\/api$/gi, '') + '/api'
   : '/api';
 
-if (process.env.NODE_ENV === 'production' && !rawApiUrl) {
-  console.error(
-    'REACT_APP_API_URL is not configured. Production frontend will send API requests to /api on the frontend host.\n' +
-    'Set REACT_APP_API_URL to the backend host or backend API URL (for example https://your-backend.onrender.com or https://your-backend.onrender.com/api).'
-  );
+if (!rawApiUrl) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      'REACT_APP_API_URL is not configured. Production frontend will send API requests to /api on the frontend host.\n' +
+      'Set REACT_APP_API_URL to the backend host or backend API URL.'
+    );
+  } else {
+    console.warn(
+      'REACT_APP_API_URL is not configured. Using default API URL:', API_URL
+    );
+  }
 }
+
+console.info('QuickGrocer frontend API base URL:', API_URL);
 
 const api = axios.create({ baseURL: API_URL, timeout: 30000 });
 
