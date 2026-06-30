@@ -1,12 +1,15 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+const rawApiUrl = process.env.REACT_APP_API_URL;
+const API_URL = rawApiUrl
+  ? rawApiUrl.replace(/\/+$|\/api$/gi, '').replace(/\/+$/, '') + '/api'
+  : '/api';
 
-if (process.env.NODE_ENV === 'production' && !process.env.REACT_APP_API_URL) {
+if (process.env.NODE_ENV === 'production' && !rawApiUrl) {
   console.error(
     'REACT_APP_API_URL is not configured. Production frontend will send API requests to /api on the frontend host.\n' +
-    'Set REACT_APP_API_URL to the backend API URL (for example https://your-backend.onrender.com/api).'
+    'Set REACT_APP_API_URL to the backend host or backend API URL (for example https://your-backend.onrender.com or https://your-backend.onrender.com/api).'
   );
 }
 

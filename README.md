@@ -72,11 +72,11 @@ npm run dev:frontend  # terminal 2 → :3000
 2. Import repo, set **Root Directory** to `frontend`
 3. Add env vars:
    ```
-   REACT_APP_API_URL=https://quickgrocer-api.onrender.com/api
+   REACT_APP_API_URL=https://quickgrocer-api.onrender.com
    REACT_APP_SOCKET_URL=https://quickgrocer-api.onrender.com
    REACT_APP_RAZORPAY_KEY_ID=rzp_live_...
    ```
-   > `REACT_APP_API_URL` must point to the backend API server, not the Vercel frontend URL.
+   > `REACT_APP_API_URL` can be the backend host or the backend API URL. The app will normalize it to end in `/api`.
 4. Deploy!
 
 ## 🔑 Environment Variables
