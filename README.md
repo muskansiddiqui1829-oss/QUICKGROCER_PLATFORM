@@ -76,6 +76,7 @@ npm run dev:frontend  # terminal 2 → :3000
    REACT_APP_SOCKET_URL=https://quickgrocer-api.onrender.com
    REACT_APP_RAZORPAY_KEY_ID=rzp_live_...
    ```
+   > `REACT_APP_API_URL` must point to the backend API server, not the Vercel frontend URL.
 4. Deploy!
 
 ## 🔑 Environment Variables
