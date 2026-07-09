@@ -44,7 +44,10 @@ exports.placeOrder = asyncHandler(async (req, res, next) => {
     subtotal += product.price * item.quantity;
   }
 
-  if (subtotal < store.minOrderAmount) throw new AppError(`Minimum order is ₹${store.minOrderAmount}`, 400);
+  if (subtotal < 1) throw new AppError('Cart is empty', 400);
+  if (subtotal < (store.minOrderAmount || 0)) {
+    throw new AppError(`Minimum order is ₹${store.minOrderAmount || 0}`, 400);
+  }
 
   // Calculate distance & delivery fee
   const storeCoords = store.location.coordinates;

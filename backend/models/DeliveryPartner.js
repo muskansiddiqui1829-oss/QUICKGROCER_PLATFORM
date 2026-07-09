@@ -38,7 +38,7 @@ const deliveryPartnerSchema = new mongoose.Schema({
   },
   workingArea: {
     type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: [Number],
+    coordinates: { type: [Number], default: [0, 0] },
     radius: { type: Number, default: 10 }, // km
   },
 }, { timestamps: true });

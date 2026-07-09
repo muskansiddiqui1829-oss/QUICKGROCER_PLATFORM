@@ -38,9 +38,12 @@ import AdminCoupons from './pages/admin/Coupons';
 import AdminAnalytics from './pages/admin/Analytics';
 
 // Guards
-const ProtectedRoute = ({ children, roles }) => {
+const ProtectedRoute = ({ children, roles, allowGuest = false }) => {
   const { isAuthenticated, user } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    if (allowGuest) return children;
+    return <Navigate to="/login" replace />;
+  }
   if (roles && !roles.includes(user?.role)) return <Navigate to="/" replace />;
   return children;
 };
@@ -75,7 +78,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Customer */}
-        <Route path="/cart" element={<ProtectedRoute roles={['customer']}><Cart /></ProtectedRoute>} />
+        <Route path="/cart" element={<ProtectedRoute roles={['customer']} allowGuest><Cart /></ProtectedRoute>} />
         <Route path="/checkout" element={<ProtectedRoute roles={['customer']}><Checkout /></ProtectedRoute>} />
         <Route path="/orders" element={<ProtectedRoute roles={['customer']}><MyOrders /></ProtectedRoute>} />
         <Route path="/orders/:id" element={<ProtectedRoute roles={['customer']}><OrderDetail /></ProtectedRoute>} />

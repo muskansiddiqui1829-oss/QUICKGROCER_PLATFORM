@@ -20,7 +20,10 @@ export default function Login() {
       else if (user.role === 'vendor') navigate('/vendor');
       else if (user.role === 'delivery') navigate('/delivery');
       else navigate('/');
-    } catch {}
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'Login failed';
+      toast.error(message);
+    }
     setLoading(false);
   };
 

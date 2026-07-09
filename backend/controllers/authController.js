@@ -4,6 +4,12 @@ const DeliveryPartner = require('../models/DeliveryPartner');
 const { asyncHandler, AppError } = require('../utils/helpers');
 const { sendEmail, emailTemplates } = require('../utils/email');
 
+const isEnvAdminLogin = (email, password) => {
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  return Boolean(adminEmail && adminPassword && email?.toLowerCase() === adminEmail && password === adminPassword);
+};
+
 const sendTokenResponse = (user, statusCode, res) => {
   const token = user.generateAuthToken();
   const refreshToken = user.generateRefreshToken();
@@ -35,7 +41,14 @@ exports.register = asyncHandler(async (req, res, next) => {
 
   // Create delivery partner profile if role is delivery
   if (role === 'delivery') {
-    await DeliveryPartner.create({ user: user._id, vehicleType: 'bike', vehicleNumber: 'PENDING', licenseNumber: 'PENDING' });
+    await DeliveryPartner.create({
+      user: user._id,
+      vehicleType: 'bike',
+      vehicleNumber: 'PENDING',
+      licenseNumber: 'PENDING',
+      currentLocation: { type: 'Point', coordinates: [0, 0] },
+      workingArea: { type: 'Point', coordinates: [0, 0], radius: 10 },
+    });
   }
 
   sendTokenResponse(user, 201, res);
@@ -44,10 +57,33 @@ exports.register = asyncHandler(async (req, res, next) => {
 // @route POST /api/auth/login
 exports.login = asyncHandler(async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email }).select('+password');
-  if (!user || !(await user.comparePassword(password))) {
+  const envAdminLogin = isEnvAdminLogin(email, password);
+
+  let user = await User.findOne({ email }).select('+password');
+
+  if (envAdminLogin) {
+    const adminEmail = process.env.ADMIN_EMAIL.toLowerCase();
+    user = await User.findOne({ email: adminEmail }).select('+password');
+
+    if (!user) {
+      user = await User.create({
+        name: 'Admin',
+        email: adminEmail,
+        phone: '9999999999',
+        password: process.env.ADMIN_PASSWORD,
+        role: 'admin',
+      });
+    } else {
+      user.password = process.env.ADMIN_PASSWORD;
+      user.role = 'admin';
+      user.isActive = true;
+      await user.save();
+      user = await User.findById(user._id).select('+password');
+    }
+  } else if (!user || !(await user.comparePassword(password))) {
     throw new AppError('Invalid email or password', 401);
   }
+
   if (!user.isActive) throw new AppError('Account deactivated. Contact support.', 401);
 
   user.lastLogin = new Date();

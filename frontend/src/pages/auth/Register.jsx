@@ -18,7 +18,10 @@ export default function Register() {
       if (user.role === 'vendor') navigate('/vendor/onboarding');
       else if (user.role === 'delivery') navigate('/delivery');
       else navigate('/');
-    } catch {}
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'Registration failed';
+      toast.error(message);
+    }
     setLoading(false);
   };
 

@@ -57,6 +57,11 @@ export default function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress && !showAddressForm) { toast.error('Select a delivery address'); return; }
+    if (!subtotal || subtotal < 1) {
+      toast.error('Cart total must be greater than zero');
+      navigate('/cart');
+      return;
+    }
     setLoading(true);
     try {
       const address = showAddressForm ? newAddress : selectedAddress;
@@ -102,7 +107,10 @@ export default function Checkout() {
         toast.success('Paid from wallet! 🎉');
         navigate(`/orders/${order._id}`);
       }
-    } catch {}
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Failed to place order';
+      toast.error(message);
+    }
     setLoading(false);
   };
 
