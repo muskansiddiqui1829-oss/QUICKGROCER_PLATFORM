@@ -115,7 +115,8 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   const template = emailTemplates.passwordReset(resetToken);
-  await sendEmail({ to: user.email, ...template });
+  const emailSent = await sendEmail({ to: user.email, ...template });
+  if (!emailSent) throw new AppError('Unable to send password reset email. Please try again later.', 503);
 
   res.json({ success: true, message: 'Password reset email sent' });
 });

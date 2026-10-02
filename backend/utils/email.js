@@ -15,9 +15,11 @@ const sendEmail = async ({ to, subject, html, text }) => {
       to, subject, html, text,
     });
     logger.info(`Email sent to ${to}`);
+    return true;
   } catch (err) {
     logger.error(`Email send error: ${err.message}`);
     // Don't throw — email failures shouldn't break core flows
+    return false;
   }
 };
 

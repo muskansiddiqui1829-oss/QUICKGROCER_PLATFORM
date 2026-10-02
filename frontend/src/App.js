@@ -15,6 +15,7 @@ import Profile from './pages/customer/Profile';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 // Vendor pages
 import VendorDashboard from './pages/vendor/Dashboard';
@@ -76,6 +77,7 @@ function App() {
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Customer */}
         <Route path="/cart" element={<ProtectedRoute roles={['customer']} allowGuest><Cart /></ProtectedRoute>} />

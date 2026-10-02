@@ -7,16 +7,21 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       await authAPI.forgotPassword(email);
       setSent(true);
       toast.success('Reset link sent to your email');
-    } catch {}
-    setLoading(false);
+    } catch (requestError) {
+      setError(requestError?.response?.data?.message || 'Unable to send the reset link. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,6 +41,7 @@ export default function ForgotPassword() {
               <label>Email</label>
               <input className="form-control" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
+            {error && <p role="alert" style={{ color: 'var(--danger)', marginBottom: 16 }}>{error}</p>}
             <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
               {loading ? 'Sending...' : 'Send Reset Link'}
             </button>
