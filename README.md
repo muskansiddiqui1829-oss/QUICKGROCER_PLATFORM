@@ -66,6 +66,8 @@ npm run dev:frontend  # terminal 2 → :3000
 5. Add all env vars from `.env.example`
 6. Deploy — get URL like `https://quickgrocer-api.onrender.com`
 
+To add the demo stores and products to the deployed database, run `npm run seed:demo` once from the backend service's Render Shell. This is a separate, manual action; deploying the service does not run the seed script. If the `vendor@quickgrocer.com` account does not already exist, set `DEMO_VENDOR_PASSWORD` in the Render service environment before running it. The script does not reset an existing vendor password.
+
 ### Frontend → Vercel
 
 1. New project on [vercel.com](https://vercel.com)

@@ -6,7 +6,6 @@ const Store = require('../models/Store');
 const Product = require('../models/Product');
 
 const vendorEmail = 'vendor@quickgrocer.com';
-const vendorPassword = 'Vendor@123456';
 
 const storeSeeds = [
   {
@@ -199,6 +198,13 @@ async function seedDemoData() {
 
   let vendor = await User.findOne({ email: vendorEmail });
   if (!vendor) {
+    const vendorPassword = process.env.DEMO_VENDOR_PASSWORD || (process.env.NODE_ENV === 'production'
+      ? null
+      : 'Vendor@123456');
+    if (!vendorPassword) {
+      throw new Error('Set DEMO_VENDOR_PASSWORD before creating the demo vendor in production.');
+    }
+
     vendor = await User.create({
       name: 'Demo Vendor',
       email: vendorEmail,
@@ -209,7 +215,6 @@ async function seedDemoData() {
       isActive: true,
     });
   } else {
-    vendor.password = vendorPassword;
     vendor.role = 'vendor';
     vendor.isVerified = true;
     vendor.isActive = true;
@@ -244,9 +249,7 @@ async function seedDemoData() {
       );
     }
   }
-
   console.log(`Seed complete. Created ${createdStores.length} stores and demo products.`);
-  console.log('Vendor login:', { email: vendorEmail, password: vendorPassword });
   process.exit(0);
 }
 
