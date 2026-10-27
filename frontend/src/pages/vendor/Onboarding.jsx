@@ -8,7 +8,7 @@ const CATEGORIES = ['grocery', 'fruits_vegetables', 'dairy', 'bakery', 'meat_sea
 export default function VendorOnboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ name: '', description: '', category: 'grocery', minOrderAmount: 99, deliveryRadius: 5, deliveryTime: '30-45 mins', location: { type: 'Point', coordinates: [77.5946, 12.9716], address: '', city: '', state: '', pincode: '' } });
+  const [form, setForm] = useState({ name: '', description: '', category: ['grocery'], minOrderAmount: 99, deliveryRadius: 5, deliveryTime: '30-45 mins', location: { type: 'Point', coordinates: [77.5946, 12.9716], address: '', city: '', state: '', pincode: '' } });
   const [saving, setSaving] = useState(false);
 
   const handleGetLocation = () => {
@@ -66,10 +66,38 @@ export default function VendorOnboarding() {
               <textarea className="form-control" placeholder="Tell customers what you sell..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} />
             </div>
             <div className="form-group">
-              <label>Category *</label>
-              <select className="form-control" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map(c => <option key={c} value={c}>{c.replace('_', ' & ')}</option>)}
-              </select>
+              <label>Categories *</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {CATEGORIES.map(c => {
+                  const selected = form.category.includes(c);
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setForm(prev => {
+                        const next = prev.category.includes(c)
+                          ? prev.category.filter(item => item !== c)
+                          : [...prev.category, c];
+                        return { ...prev, category: next };
+                      })}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 20,
+                        border: `1px solid ${selected ? 'var(--primary)' : 'var(--border)'}`,
+                        background: selected ? 'var(--primary-light)' : 'white',
+                        color: selected ? 'var(--primary-dark)' : 'var(--text-light)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {c.replace('_', ' & ')}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 8 }}>
+                {form.category.length ? `${form.category.length} selected` : 'Select at least one category'}
+              </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div className="form-group">
@@ -81,7 +109,7 @@ export default function VendorOnboarding() {
                 <input className="form-control" type="number" value={form.deliveryRadius} onChange={e => setForm({ ...form, deliveryRadius: +e.target.value })} />
               </div>
             </div>
-            <button className="btn btn-primary" style={{ width: '100%', padding: 14 }} onClick={() => setStep(2)} disabled={!form.name}>Next →</button>
+            <button className="btn btn-primary" style={{ width: '100%', padding: 14 }} onClick={() => setStep(2)} disabled={!form.name || form.category.length === 0}>Next →</button>
           </div>
         )}
 

@@ -97,6 +97,15 @@ export const productAPI = {
   delete: (id) => api.delete(`/products/${id}`),
 };
 
+// Uploads
+export const uploadAPI = {
+  productImages: (files) => {
+    const formData = new FormData();
+    files.forEach(file => formData.append('images', file));
+    return api.post('/upload/multiple?folder=products', formData);
+  },
+};
+
 // Orders
 export const orderAPI = {
   place: (data) => api.post('/orders', data),

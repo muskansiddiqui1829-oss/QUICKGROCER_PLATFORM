@@ -7,9 +7,14 @@ const storeSchema = new mongoose.Schema({
   logo: { type: String, default: '' },
   banner: { type: String, default: '' },
   category: {
-    type: String,
-    enum: ['grocery', 'fruits_vegetables', 'dairy', 'bakery', 'meat_seafood', 'beverages', 'snacks', 'organic', 'general'],
-    required: true,
+    type: [String],
+    validate: {
+      validator: function (value) {
+        return Array.isArray(value) && value.length > 0 && value.every(item => ['grocery', 'fruits_vegetables', 'dairy', 'bakery', 'meat_seafood', 'beverages', 'snacks', 'organic', 'general'].includes(item));
+      },
+      message: 'Store must have at least one valid category',
+    },
+    default: [],
   },
   location: {
     type: { type: String, enum: ['Point'], default: 'Point' },

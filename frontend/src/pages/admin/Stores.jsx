@@ -62,7 +62,7 @@ export default function AdminStores() {
                     <div>{store.owner?.name}</div>
                     <div style={{ color: 'var(--text-light)', fontSize: 12 }}>{store.owner?.email}</div>
                   </td>
-                  <td style={{ padding: '14px 16px', fontSize: 14 }}>{store.category?.replace('_', ' ')}</td>
+                  <td style={{ padding: '14px 16px', fontSize: 14 }}>{Array.isArray(store.category) ? store.category.map(c => c.replace('_', ' ')).join(', ') : store.category?.replace('_', ' ')}</td>
                   <td style={{ padding: '14px 16px', fontSize: 13, color: 'var(--text-light)' }}>{store.location?.city}</td>
                   <td style={{ padding: '14px 16px' }}>
                     <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: store.isApproved ? '#d1fae5' : '#fef3c7', color: store.isApproved ? '#065f46' : '#92400e' }}>

@@ -133,7 +133,7 @@ function StoreCard({ store }) {
           <h3 style={{ fontWeight: 700, fontSize: 16 }}>{store.name}</h3>
           <span style={{ background: 'var(--primary-light)', color: 'var(--primary)', padding: '4px 8px', borderRadius: 6, fontSize: 13, fontWeight: 600 }}>⭐ {store.ratings?.average || 'New'}</span>
         </div>
-        <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 12 }}>{store.description || store.category?.replace('_', ' ')}</p>
+        <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 12 }}>{store.description || (Array.isArray(store.category) ? store.category.map(c => c.replace('_', ' ')).join(', ') : store.category?.replace('_', ' '))}</p>
         <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-light)' }}>
           <span>🕒 {store.deliveryTime}</span>
           <span>📍 {store.location?.city || store.location?.address}</span>

@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import VendorLayout from '../../components/vendor/VendorLayout';
-import { productAPI } from '../../services/api';
+import { productAPI, storeAPI, uploadAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
-const EMPTY_FORM = { name: '', description: '', price: '', mrp: '', stock: '', category: '', unit: 'piece', quantity: 1, isFeatured: false };
+const EMPTY_FORM = { name: '', description: '', price: '', mrp: '', stock: '', category: '', unit: 'piece', quantity: 1, isFeatured: false, images: [] };
+const CATEGORY_LABELS = {
+  grocery: 'Grocery',
+  fruits_vegetables: 'Fruits & Vegetables',
+  dairy: 'Dairy',
+  bakery: 'Bakery',
+  meat_seafood: 'Meat & Seafood',
+  beverages: 'Beverages',
+  snacks: 'Snacks',
+  organic: 'Organic',
+  general: 'General',
+};
 
 export default function VendorProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [storeCategories, setStoreCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesLoadError, setCategoriesLoadError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -24,13 +39,64 @@ export default function VendorProducts() {
 
   useEffect(() => { fetchProducts(); }, []);
 
-  const openAdd = () => { setForm(EMPTY_FORM); setEditId(null); setShowModal(true); };
+  useEffect(() => {
+    const fetchStoreCategories = async () => {
+      try {
+        const res = await storeAPI.getMyStore();
+        const categories = res.data?.category;
+        setStoreCategories(Array.isArray(categories) ? categories : categories ? [categories] : []);
+      } catch {
+        setCategoriesLoadError(true);
+        toast.error('Could not load your store categories. Refresh the page to try again.');
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchStoreCategories();
+  }, []);
+
+  const openAdd = () => {
+    setForm({ ...EMPTY_FORM, category: storeCategories[0] || '' });
+    setEditId(null);
+    setShowModal(true);
+  };
   const openEdit = (p) => {
-    setForm({ name: p.name, description: p.description || '', price: p.price, mrp: p.mrp, stock: p.stock, category: p.category, unit: p.unit, quantity: p.quantity, isFeatured: p.isFeatured });
+    setForm({ name: p.name, description: p.description || '', price: p.price, mrp: p.mrp, stock: p.stock, category: p.category, unit: p.unit, quantity: p.quantity, isFeatured: p.isFeatured, images: p.images || [] });
     setEditId(p._id); setShowModal(true);
   };
 
+  const handleImageSelection = async (event) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    event.target.value = '';
+    if (!selectedFiles.length) return;
+
+    const availableSlots = 5 - form.images.length;
+    if (selectedFiles.length > availableSlots) {
+      toast.error(`You can add up to 5 images. ${availableSlots} slot${availableSlots === 1 ? '' : 's'} remaining.`);
+      return;
+    }
+
+    setUploadingImages(true);
+    try {
+      const res = await uploadAPI.productImages(selectedFiles);
+      setForm(current => ({
+        ...current,
+        images: [...current.images, ...(res.data || []).map(image => image.url)],
+      }));
+      toast.success('Product image' + (selectedFiles.length > 1 ? 's' : '') + ' uploaded');
+    } catch {
+      // The API interceptor displays the upload error.
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const removeImage = (imageIndex) => {
+    setForm(current => ({ ...current, images: current.images.filter((_, index) => index !== imageIndex) }));
+  };
+
   const handleSave = async () => {
+    if (uploadingImages) return;
     setSaving(true);
     try {
       if (editId) {
@@ -58,7 +124,7 @@ export default function VendorProducts() {
     <VendorLayout>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontWeight: 800 }}>Products <span style={{ fontSize: 18, color: 'var(--text-light)', fontWeight: 400 }}>({products.length})</span></h1>
-        <button className="btn btn-primary" onClick={openAdd}>+ Add Product</button>
+        <button className="btn btn-primary" onClick={openAdd} disabled={categoriesLoading}>+ Add Product</button>
       </div>
 
       {loading ? <div className="loading-container"><div className="spinner" /></div> : (
@@ -121,13 +187,62 @@ export default function VendorProducts() {
           <div style={{ background: 'white', borderRadius: 16, padding: 32, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
             <h2 style={{ marginBottom: 24, fontWeight: 700 }}>{editId ? 'Edit Product' : 'Add New Product'}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              {[['name', 'Product Name', 'span 2'], ['category', 'Category'], ['price', 'Selling Price (₹)'], ['mrp', 'MRP (₹)'], ['stock', 'Stock'], ['quantity', 'Quantity']].map(([key, label, span]) => (
+              {[['name', 'Product Name', 'span 2'], ['price', 'Selling Price (₹)'], ['mrp', 'MRP (₹)'], ['stock', 'Stock'], ['quantity', 'Quantity']].map(([key, label, span]) => (
                 <div key={key} className="form-group" style={{ gridColumn: span || undefined }}>
                   <label>{label}</label>
                   <input className="form-control" type={['price', 'mrp', 'stock', 'quantity'].includes(key) ? 'number' : 'text'}
                     value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} />
                 </div>
               ))}
+              <div className="form-group">
+                <label>Category</label>
+                <select className="form-control" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required>
+                  {!storeCategories.includes(form.category) && form.category && (
+                    <option value={form.category}>{CATEGORY_LABELS[form.category] || form.category}</option>
+                  )}
+                  {storeCategories.map(category => (
+                    <option key={category} value={category}>{CATEGORY_LABELS[category] || category.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+                {storeCategories.length === 0 && (
+                  <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6 }}>
+                    {categoriesLoadError
+                      ? 'Could not load your store categories. Refresh the page to try again.'
+                      : 'Your store has no categories configured. Add categories to your store before adding products.'}
+                  </div>
+                )}
+              </div>
+              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                <label>Product Images (up to 5)</label>
+                <input
+                  className="form-control"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleImageSelection}
+                  disabled={uploadingImages || form.images.length >= 5}
+                />
+                <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 6 }}>
+                  JPG, PNG, or WebP; up to 5 MB per image. {uploadingImages ? 'Uploading...' : `${form.images.length}/5 uploaded`}
+                </div>
+                {form.images.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+                    {form.images.map((image, index) => (
+                      <div key={`${image}-${index}`} style={{ position: 'relative', width: 76, height: 76 }}>
+                        <img src={image} alt={`Product ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                        <button
+                          type="button"
+                          aria-label={`Remove image ${index + 1}`}
+                          onClick={() => removeImage(index)}
+                          style={{ position: 'absolute', top: -6, right: -6, width: 24, height: 24, border: 0, borderRadius: '50%', background: 'var(--danger)', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div className="form-group">
                 <label>Unit</label>
                 <select className="form-control" value={form.unit} onChange={e => setForm({ ...form, unit: e.target.value })}>
@@ -144,7 +259,7 @@ export default function VendorProducts() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-              <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{ flex: 1 }}>{saving ? 'Saving...' : 'Save Product'}</button>
+              <button className="btn btn-primary" onClick={handleSave} disabled={saving || uploadingImages || categoriesLoading || !form.category} style={{ flex: 1 }}>{uploadingImages ? 'Uploading images...' : saving ? 'Saving...' : 'Save Product'}</button>
               <button className="btn btn-outline" onClick={() => setShowModal(false)} style={{ flex: 1 }}>Cancel</button>
             </div>
           </div>
