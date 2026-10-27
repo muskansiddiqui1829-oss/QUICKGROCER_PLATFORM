@@ -4,6 +4,20 @@ const { asyncHandler, AppError, calculateDistance, paginate, paginateResponse } 
 const { cacheGet, cacheSet, cacheDel, cacheDelPattern } = require('../config/redis');
 const { sendEmail, emailTemplates } = require('../utils/email');
 
+// @GET /api/stores?category=&page=&limit=
+exports.getAllAvailableStores = asyncHandler(async (req, res) => {
+  const { category, page = 1, limit = 20 } = req.query;
+  const query = { isApproved: true, isActive: true };
+  if (category) query.category = category;
+
+  const { skip, limit: lim } = paginate(null, page, limit);
+  const [stores, total] = await Promise.all([
+    Store.find(query).sort({ name: 1 }).skip(skip).limit(lim).populate('owner', 'name phone'),
+    Store.countDocuments(query),
+  ]);
+  res.json({ success: true, ...paginateResponse(stores, total, page, lim) });
+});
+
 // @GET /api/stores/nearby?lat=&lng=&radius=&category=
 exports.getNearbyStores = asyncHandler(async (req, res) => {
   const { lat, lng, radius = 5, category, page = 1, limit = 20 } = req.query;

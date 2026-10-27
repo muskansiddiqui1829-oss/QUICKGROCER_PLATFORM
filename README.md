@@ -116,7 +116,8 @@ Create an admin manually in MongoDB or use the seeder:
 - `GET  /api/auth/me` — Get current user
 
 ### Customer Flow
-- `GET  /api/stores/nearby?lat=&lng=&radius=5` — Discover stores
+- `GET  /api/stores` — Browse all approved, active stores across locations
+- `GET  /api/stores/nearby?lat=&lng=&radius=5` — Discover stores near coordinates
 - `GET  /api/products?storeId=&category=` — Browse products
 - `POST /api/orders` — Place order
 - `GET  /api/orders/my-orders` — Order history

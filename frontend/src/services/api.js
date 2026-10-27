@@ -74,6 +74,7 @@ export const authAPI = {
 
 // Stores
 export const storeAPI = {
+  getAll: (params) => api.get('/stores', { params }),
   getNearby: (params) => api.get('/stores/nearby', { params }),
   getById: (id) => api.get(`/stores/${id}`),
   getMyStore: () => api.get('/stores/my-store'),

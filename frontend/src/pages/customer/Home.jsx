@@ -17,49 +17,39 @@ const CATEGORIES = [
 
 export default function Home() {
   const [stores, setStores] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('');
-  const [location, setLocation] = useState(null);
-  const [locationError, setLocationError] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const getLocation = useCallback(() => {
-    if (!navigator.geolocation) { setLocationError('Geolocation not supported by your browser'); return; }
-    setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocationError('');
-        setLoading(false);
-      },
-      err => {
-        let message = err?.message || 'Could not get location';
-        if (err?.code === 1) message = 'Location permission denied. Allow location access and refresh the page.';
-        else if (err?.code === 2) message = 'Unable to determine location. Try again or enter a location manually.';
-        else if (err?.code === 3) message = 'Location request timed out. Please try again.';
-
-        setLocation({ lat: 12.9716, lng: 77.5946 });
-        setLocationError(`${message} Using default location (Bengaluru).`);
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-    );
-  }, []);
-
-  useEffect(() => { getLocation(); }, [getLocation]);
-
   useEffect(() => {
-    if (!location) return;
+    let cancelled = false;
     const fetchStores = async () => {
       setLoading(true);
+      setLoadError('');
       try {
-        const res = await storeAPI.getNearby({ lat: location.lat, lng: location.lng, radius: 10, category, limit: 20 });
-        setStores(res.data || []);
-      } catch {}
-      setLoading(false);
+        const limit = 100;
+        const firstPage = await storeAPI.getAll({ category, limit, page: 1 });
+        const allStores = firstPage.data || [];
+        const pages = firstPage.pagination?.pages || 1;
+
+        for (let page = 2; page <= pages; page += 1) {
+          const res = await storeAPI.getAll({ category, limit, page });
+          allStores.push(...(res.data || []));
+        }
+
+        if (!cancelled) setStores(allStores);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(error?.response?.data?.message || 'Unable to load stores. Refresh the page to try again.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
     fetchStores();
-  }, [location, category]);
+    return () => { cancelled = true; };
+  }, [category]);
 
   const filteredStores = stores.filter(s => !searchQuery || s.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -70,19 +60,15 @@ export default function Home() {
       <div style={{ background: 'linear-gradient(135deg, #2ecc71 0%, #1abc9c 100%)', padding: '48px 0', color: 'white' }}>
         <div className="container" style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 40, fontWeight: 800, marginBottom: 12 }}>Groceries in 30 minutes ⚡</h1>
-          <p style={{ fontSize: 18, opacity: 0.9, marginBottom: 32 }}>Fresh from local stores near you</p>
+          <p style={{ fontSize: 18, opacity: 0.9, marginBottom: 32 }}>Browse stores from every location</p>
           <div style={{ maxWidth: 560, margin: '0 auto', position: 'relative' }}>
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search stores..."
-              style={{ width: '100%', padding: '16px 24px', borderRadius: 50, border: 'none', fontSize: 16, outline: 'none', paddingRight: 120, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+              style={{ width: '100%', padding: '16px 24px', borderRadius: 50, border: 'none', fontSize: 16, outline: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
             />
-            <button onClick={getLocation} style={{ position: 'absolute', right: 8, top: 8, background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 40, cursor: 'pointer', fontWeight: 600 }}>
-              📍 Locate
-            </button>
           </div>
-          {locationError && <p style={{ marginTop: 8, opacity: 0.8, fontSize: 13 }}>{locationError}</p>}
         </div>
       </div>
 
@@ -99,16 +85,20 @@ export default function Home() {
 
         {/* Stores */}
         <h2 style={{ marginBottom: 20, fontWeight: 700 }}>
-          {loading ? 'Finding stores...' : `${filteredStores.length} stores near you`}
+          {loading ? 'Loading stores...' : `${filteredStores.length} stores available`}
         </h2>
 
         {loading ? (
           <div className="loading-container"><div className="spinner" /></div>
+        ) : loadError ? (
+          <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>
+            <h3>{loadError}</h3>
+          </div>
         ) : filteredStores.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-light)' }}>
             <div style={{ fontSize: 60, marginBottom: 16 }}>🏪</div>
             <h3>No stores found</h3>
-            <p>Try a different category or expand your radius</p>
+            <p>Try a different category or search term</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
@@ -146,7 +136,7 @@ function StoreCard({ store }) {
         <p style={{ color: 'var(--text-light)', fontSize: 13, marginBottom: 12 }}>{store.description || store.category?.replace('_', ' ')}</p>
         <div style={{ display: 'flex', gap: 16, fontSize: 13, color: 'var(--text-light)' }}>
           <span>🕒 {store.deliveryTime}</span>
-          <span>📍 {store.distance} km</span>
+          <span>📍 {store.location?.city || store.location?.address}</span>
           <span>💰 Min ₹{store.minOrderAmount}</span>
         </div>
       </div>

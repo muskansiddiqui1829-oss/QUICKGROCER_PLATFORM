@@ -1,12 +1,14 @@
 // Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import useAuthStore from '../../context/authStore';
 import toast from 'react-hot-toast';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -38,13 +40,24 @@ export default function Login() {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Email</label>
-            <input className="form-control" type="email" placeholder="you@example.com" value={form.email}
+            <input className="form-control" type="email" autoComplete="username" placeholder="you@example.com" value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })} required />
           </div>
           <div className="form-group">
             <label>Password</label>
-            <input className="form-control" type="password" placeholder="••••••••" value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })} required />
+            <div style={{ position: 'relative' }}>
+              <input className="form-control" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
+                placeholder="••••••••" value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                style={{ paddingRight: 48 }} required />
+              <button type="button" onClick={() => setShowPassword(visible => !visible)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', color: 'var(--text-light)', padding: 4, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center' }}>
+                {showPassword ? <FaEyeSlash aria-hidden="true" /> : <FaEye aria-hidden="true" />}
+              </button>
+            </div>
           </div>
           <div style={{ textAlign: 'right', marginBottom: 16 }}>
             <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: 14 }}>Forgot password?</Link>

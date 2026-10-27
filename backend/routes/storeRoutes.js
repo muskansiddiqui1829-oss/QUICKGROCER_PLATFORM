@@ -1,9 +1,10 @@
 // storeRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getNearbyStores, getStore, createStore, updateStore, getMyStore, toggleStoreStatus, getStoreDashboard } = require('../controllers/storeController');
+const { getAllAvailableStores, getNearbyStores, getStore, createStore, updateStore, getMyStore, toggleStoreStatus, getStoreDashboard } = require('../controllers/storeController');
 const { protect, authorize } = require('../middleware/auth');
 
+router.get('/', getAllAvailableStores);
 router.get('/nearby', getNearbyStores);
 router.get('/my-store', protect, authorize('vendor'), getMyStore);
 router.get('/dashboard', protect, authorize('vendor'), getStoreDashboard);
