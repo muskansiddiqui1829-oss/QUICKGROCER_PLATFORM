@@ -84,23 +84,36 @@ export default function Checkout() {
       } else if (paymentMethod === 'razorpay') {
         const rpRes = await paymentAPI.createRazorpayOrder(order._id);
         const options = {
-          key: process.env.REACT_APP_RAZORPAY_KEY_ID,
+          key: rpRes.data.keyId,
           amount: rpRes.data.amount,
           currency: rpRes.data.currency,
           name: 'QuickGrocer',
           description: `Order #${order.orderNumber}`,
           order_id: rpRes.data.razorpayOrderId,
           handler: async (response) => {
-            await paymentAPI.verifyRazorpay({ orderId: order._id, ...response });
-            clearCart();
-            toast.success('Payment successful! 🎉');
-            navigate(`/orders/${order._id}`);
+            try {
+              await paymentAPI.verifyRazorpay({
+                orderId: order._id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+              });
+              clearCart();
+              toast.success('Payment successful! 🎉');
+              navigate(`/orders/${order._id}`);
+            } catch (error) {
+              toast.error(error?.response?.data?.message || 'Payment verification failed');
+            } finally {
+              setLoading(false);
+            }
           },
           prefill: { name: user.name, email: user.email, contact: user.phone },
           theme: { color: '#2ecc71' },
+          modal: { ondismiss: () => setLoading(false) },
         };
         const rzp = new window.Razorpay(options);
         rzp.open();
+        setLoading(false);
       } else if (paymentMethod === 'wallet') {
         await paymentAPI.payWithWallet(order._id);
         clearCart();

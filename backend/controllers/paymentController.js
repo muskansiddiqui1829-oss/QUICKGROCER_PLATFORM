@@ -53,18 +53,41 @@ exports.createRazorpayOrder = asyncHandler(async (req, res) => {
 // @POST /api/payments/razorpay/verify
 exports.verifyRazorpayPayment = asyncHandler(async (req, res) => {
   if (!razorpay) throw new AppError('Razorpay is not configured', 503);
-  
+
   const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+  if (![orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature].every(value => typeof value === 'string' && value.length > 0)) {
+    throw new AppError('Missing Razorpay payment details', 400);
+  }
+
+  const order = await Order.findById(orderId);
+  if (!order) throw new AppError('Order not found', 404);
+  if (order.customer.toString() !== req.user._id.toString()) throw new AppError('Not authorized', 403);
+  if (order.paymentMethod !== 'razorpay' || order.paymentDetails.razorpayOrderId !== razorpayOrderId) {
+    throw new AppError('Razorpay order does not match this order', 400);
+  }
 
   const signature = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpayOrderId}|${razorpayPaymentId}`)
     .digest('hex');
 
-  if (signature !== razorpaySignature) throw new AppError('Payment verification failed', 400);
+  const signatureBuffer = Buffer.from(signature, 'hex');
+  const receivedSignatureBuffer = /^[a-f\d]{64}$/i.test(razorpaySignature)
+    ? Buffer.from(razorpaySignature, 'hex')
+    : Buffer.alloc(0);
+  if (
+    receivedSignatureBuffer.length !== signatureBuffer.length ||
+    !crypto.timingSafeEqual(signatureBuffer, receivedSignatureBuffer)
+  ) {
+    throw new AppError('Payment verification failed', 400);
+  }
 
-  const order = await Order.findById(orderId);
-  if (!order) throw new AppError('Order not found', 404);
+  if (order.paymentStatus === 'paid') {
+    if (order.paymentDetails.razorpayPaymentId === razorpayPaymentId) {
+      return res.json({ success: true, message: 'Payment already verified', data: order });
+    }
+    throw new AppError('Order has already been paid', 409);
+  }
 
   order.paymentStatus = 'paid';
   order.paymentDetails.razorpayPaymentId = razorpayPaymentId;
