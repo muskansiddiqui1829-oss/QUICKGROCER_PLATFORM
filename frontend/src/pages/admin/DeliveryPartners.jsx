@@ -27,14 +27,22 @@ export default function AdminDelivery() {
     } catch {}
   };
 
+  const handleToggleBan = async (id) => {
+    try {
+      await adminAPI.toggleDeliveryPartnerBan(id);
+      toast.success('Partner status updated!');
+      fetchPartners();
+    } catch {}
+  };
+
   return (
     <AdminLayout>
       <h1 style={{ fontWeight: 800, marginBottom: 24 }}>Delivery Partners</h1>
       <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-        {['pending', 'approved', ''].map(s => (
+        {['pending', 'approved', 'banned', ''].map(s => (
           <button key={s} onClick={() => setStatus(s)}
             style={{ padding: '8px 20px', borderRadius: 30, border: `2px solid ${status === s ? 'var(--primary)' : 'var(--border)'}`, background: status === s ? 'var(--primary-light)' : 'white', color: status === s ? 'var(--primary-dark)' : 'var(--text-light)', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
-            {s === 'pending' ? 'Pending' : s === 'approved' ? 'Approved' : 'All'}
+            {s === 'pending' ? 'Pending' : s === 'approved' ? 'Approved' : s === 'banned' ? 'Banned' : 'All'}
           </button>
         ))}
       </div>
@@ -68,8 +76,8 @@ export default function AdminDelivery() {
                   <td style={{ padding: '14px 16px', fontWeight: 700 }}>{p.totalDeliveries}</td>
                   <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--primary-dark)' }}>₹{(p.earnings?.total || 0).toLocaleString('en-IN')}</td>
                   <td style={{ padding: '14px 16px' }}>
-                    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: p.isApproved ? '#d1fae5' : '#fef3c7', color: p.isApproved ? '#065f46' : '#92400e' }}>
-                      {p.isApproved ? 'Approved' : 'Pending'}
+                    <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600, background: p.isBanned ? '#fee2e2' : p.isApproved ? '#d1fae5' : '#fef3c7', color: p.isBanned ? '#991b1b' : p.isApproved ? '#065f46' : '#92400e' }}>
+                      {p.isBanned ? 'Banned' : p.isApproved ? 'Approved' : 'Pending'}
                     </span>
                   </td>
                   <td style={{ padding: '14px 16px' }}>
@@ -79,6 +87,10 @@ export default function AdminDelivery() {
                         Approve
                       </button>
                     )}
+                    <button onClick={() => handleToggleBan(p._id)}
+                      style={{ padding: '6px 14px', marginLeft: p.isApproved ? 0 : 8, background: p.isBanned ? '#d1fae5' : '#fee2e2', color: p.isBanned ? '#065f46' : '#991b1b', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>
+                      {p.isBanned ? 'Unban' : 'Ban'}
+                    </button>
                   </td>
                 </tr>
               ))}

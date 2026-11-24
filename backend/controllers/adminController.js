@@ -122,12 +122,19 @@ exports.toggleUserStatus = asyncHandler(async (req, res) => {
 exports.getDeliveryPartners = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, status } = req.query;
   const query = {};
-  if (status === 'pending') query.isApproved = false;
-  else if (status === 'approved') query.isApproved = true;
+  if (status === 'pending') {
+    query.isApproved = false;
+    query.isBanned = false;
+  }
+  else if (status === 'approved') {
+    query.isApproved = true;
+    query.isBanned = false;
+  }
+  else if (status === 'banned') query.isBanned = true;
 
   const { skip, limit: lim } = paginate(null, page, limit);
   const [partners, total] = await Promise.all([
-    DeliveryPartner.find(query).skip(skip).limit(lim).populate('user', 'name email phone avatar'),
+    DeliveryPartner.find(query).skip(skip).limit(lim).populate('user', 'name email phone avatar isActive'),
     DeliveryPartner.countDocuments(query),
   ]);
   res.json({ success: true, ...paginateResponse(partners, total, page, lim) });
@@ -141,6 +148,37 @@ exports.approveDeliveryPartner = asyncHandler(async (req, res) => {
   await partner.save();
   emitToUser(partner.user._id, 'delivery:approved', { message: 'Your delivery account is approved!' });
   res.json({ success: true, message: 'Delivery partner approved' });
+});
+
+// @PUT /api/admin/delivery-partners/:id/toggle-ban
+exports.toggleDeliveryPartnerBan = asyncHandler(async (req, res) => {
+  const partner = await DeliveryPartner.findById(req.params.id).populate('user', 'name email');
+  if (!partner) throw new AppError('Partner not found', 404);
+  if (!partner.user) throw new AppError('Partner account not found', 404);
+
+  partner.isBanned = !partner.isBanned;
+  if (partner.isBanned) {
+    partner.isOnDuty = false;
+    partner.isAvailable = false;
+  }
+  await partner.save();
+
+  const user = await User.findById(partner.user._id);
+  if (!user) throw new AppError('Partner account not found', 404);
+  user.isActive = !partner.isBanned;
+  await user.save();
+
+  emitToUser(user._id, partner.isBanned ? 'delivery:banned' : 'delivery:unbanned', {
+    message: partner.isBanned
+      ? 'Your delivery partner account has been banned.'
+      : 'Your delivery partner account has been restored.',
+  });
+
+  res.json({
+    success: true,
+    message: partner.isBanned ? 'Delivery partner banned' : 'Delivery partner unbanned',
+    data: { isBanned: partner.isBanned, isActive: user.isActive },
+  });
 });
 
 // @GET /api/admin/orders

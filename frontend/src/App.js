@@ -68,7 +68,7 @@ function App() {
   }, [isAuthenticated, token]);
 
   return (
-    <Router>
+    <Router future={{ v7_relativeSplatPath: true }}>
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <Routes>
         {/* Public */}

@@ -162,6 +162,7 @@ export const adminAPI = {
   toggleUserStatus: (id) => api.put(`/admin/users/${id}/toggle-status`),
   getDeliveryPartners: (params) => api.get('/admin/delivery-partners', { params }),
   approveDeliveryPartner: (id) => api.put(`/admin/delivery-partners/${id}/approve`),
+  toggleDeliveryPartnerBan: (id) => api.put(`/admin/delivery-partners/${id}/toggle-ban`),
   getOrders: (params) => api.get('/admin/orders', { params }),
   createCoupon: (data) => api.post('/admin/coupons', data),
   getCoupons: () => api.get('/admin/coupons'),

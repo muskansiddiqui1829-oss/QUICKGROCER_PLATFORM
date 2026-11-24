@@ -11,6 +11,7 @@ const deliveryPartnerSchema = new mongoose.Schema({
     aadhar: String,
   },
   isApproved: { type: Boolean, default: false },
+  isBanned: { type: Boolean, default: false },
   isAvailable: { type: Boolean, default: false },
   isOnDuty: { type: Boolean, default: false },
   currentLocation: {

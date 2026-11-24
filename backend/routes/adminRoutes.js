@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getDashboard, getAllStores, approveStore, rejectStore, getAllUsers, toggleUserStatus, getDeliveryPartners, approveDeliveryPartner, getAllOrders, createCoupon, getCoupons, updateCoupon, deleteCoupon, getAnalytics } = require('../controllers/adminController');
+const { getDashboard, getAllStores, approveStore, rejectStore, getAllUsers, toggleUserStatus, getDeliveryPartners, approveDeliveryPartner, toggleDeliveryPartnerBan, getAllOrders, createCoupon, getCoupons, updateCoupon, deleteCoupon, getAnalytics } = require('../controllers/adminController');
 const { protect, authorize } = require('../middleware/auth');
 
 router.use(protect, authorize('admin'));
@@ -13,6 +13,7 @@ router.get('/users', getAllUsers);
 router.put('/users/:id/toggle-status', toggleUserStatus);
 router.get('/delivery-partners', getDeliveryPartners);
 router.put('/delivery-partners/:id/approve', approveDeliveryPartner);
+router.put('/delivery-partners/:id/toggle-ban', toggleDeliveryPartnerBan);
 router.get('/orders', getAllOrders);
 router.post('/coupons', createCoupon);
 router.get('/coupons', getCoupons);
